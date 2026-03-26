@@ -28,7 +28,8 @@ import {
 
 export default function App() {
   // --- KONFIGURASI ---
-  const GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+  const GAS_URL =
+    "https://script.google.com/macros/s/AKfycbxCXdd6UNRvG3uWz_exZ04RArBCxjf0BlKe7xr85ZaZxKX7vh5ndaI3tyjs9cALqQzzJQ/exec";
   const ADMIN_PASSWORD_REQUIRED = "admin123";
 
   // --- AUTO-INJECT TAILWIND ---
