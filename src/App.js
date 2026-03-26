@@ -28,10 +28,11 @@ import {
 
 export default function App() {
   // --- KONFIGURASI ---
+  // Pastikan URL ini sesuai dengan Web App URL Anda setelah Deploy di Google Apps Script
   const GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec";
   const ADMIN_PASSWORD_REQUIRED = "admin123";
 
-  // --- AUTO-INJECT TAILWIND ---
+  // --- AUTO-INJECT TAILWIND (Sistem Self-Heal) ---
   useEffect(() => {
     const injectTailwind = () => {
       if (!document.getElementById("tailwind-cdn")) {
@@ -42,7 +43,7 @@ export default function App() {
       }
     };
     injectTailwind();
-    const timer = setTimeout(injectTailwind, 1000);
+    const timer = setTimeout(injectTailwind, 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -144,7 +145,7 @@ export default function App() {
     fetchData();
   }, []);
 
-  // --- AUTH HANDLERS ---
+  // --- HANDLER LOGIN & LOGOUT ---
   const handleAdminAuth = () => {
     if (passwordInput === ADMIN_PASSWORD_REQUIRED) {
       setCurrentUser({ role: "admin" });
@@ -174,8 +175,7 @@ export default function App() {
     setLoginError("");
   };
 
-  // --- KOMPONEN INTERNAL (Dipisahkan agar tidak terjadi re-render id error) ---
-
+  // --- KOMPONEN DASHBOARD ADMIN ---
   const AdminDashboard = () => {
     const [activeAdminTab, setActiveAdminTab] = useState("assignment");
     const [editId, setEditId] = useState(null);
@@ -206,7 +206,7 @@ export default function App() {
     const handleAction = async (type, data) => {
       setIsLoading(true);
       if (GAS_URL.includes("AKfycb...")) {
-        alert("Mode Simulasi: Data tidak tersimpan ke Google Sheet.");
+        alert("Mode Simulasi: Hubungkan GAS_URL untuk menyimpan.");
         setIsLoading(false);
         return;
       }
@@ -270,7 +270,7 @@ export default function App() {
               >
                 <s.icon className={`w-4 h-4 ${s.color}`} />
               </div>
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">
                 {s.label}
               </p>
               <h3 className="text-lg font-black text-slate-800">{s.val}</h3>
@@ -295,8 +295,8 @@ export default function App() {
               {tab === "assignment"
                 ? "Penugasan"
                 : tab === "patient"
-                ? "Kelola Pasien"
-                : "Kelola Caregiver"}
+                ? "Pasien"
+                : "Caregiver"}
             </button>
           ))}
         </div>
@@ -310,7 +310,7 @@ export default function App() {
                 ) : (
                   <Plus className="w-5 h-5 text-indigo-600" />
                 )}
-                {editId ? "Edit Data" : "Tambah Baru"}
+                {editId ? "Edit Data" : "Tambah"}
               </span>
               {editId && (
                 <button
@@ -331,7 +331,7 @@ export default function App() {
                 className="space-y-4"
               >
                 <select
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
                   value={assignForm.patientId}
                   onChange={(e) =>
                     setAssignForm({ ...assignForm, patientId: e.target.value })
@@ -346,7 +346,7 @@ export default function App() {
                   ))}
                 </select>
                 <select
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
                   value={assignForm.caregiverId}
                   onChange={(e) =>
                     setAssignForm({
@@ -370,7 +370,7 @@ export default function App() {
                   disabled={isLoading}
                   className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all"
                 >
-                  {isLoading ? "..." : "Tugaskan Sekarang"}
+                  Tugaskan
                 </button>
               </form>
             )}
@@ -388,8 +388,8 @@ export default function App() {
               >
                 <input
                   type="text"
-                  placeholder="Nama Lengkap Pasien"
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold"
+                  placeholder="Nama Pasien"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
                   value={patientForm.name}
                   onChange={(e) =>
                     setPatientForm({ ...patientForm, name: e.target.value })
@@ -400,7 +400,7 @@ export default function App() {
                   <input
                     type="number"
                     placeholder="Usia"
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold col-span-1"
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold col-span-1 outline-none"
                     value={patientForm.age}
                     onChange={(e) =>
                       setPatientForm({ ...patientForm, age: e.target.value })
@@ -410,7 +410,7 @@ export default function App() {
                   <input
                     type="text"
                     placeholder="Alamat Singkat"
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold col-span-2"
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold col-span-2 outline-none"
                     value={patientForm.address}
                     onChange={(e) =>
                       setPatientForm({
@@ -422,8 +422,8 @@ export default function App() {
                   />
                 </div>
                 <textarea
-                  placeholder="Diagnosa Utama Pasien"
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 font-medium"
+                  placeholder="Diagnosa"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 font-medium outline-none"
                   value={patientForm.condition}
                   onChange={(e) =>
                     setPatientForm({
@@ -440,11 +440,7 @@ export default function App() {
                     editId ? "bg-orange-500" : "bg-blue-600"
                   }`}
                 >
-                  {isLoading
-                    ? "..."
-                    : editId
-                    ? "Simpan Perubahan"
-                    : "Daftarkan Pasien"}
+                  {editId ? "Simpan" : "Daftar"}
                 </button>
               </form>
             )}
@@ -463,7 +459,7 @@ export default function App() {
                 <input
                   type="text"
                   placeholder="Nama Pramurukti"
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
                   value={caregiverForm.name}
                   onChange={(e) =>
                     setCaregiverForm({ ...caregiverForm, name: e.target.value })
@@ -472,8 +468,8 @@ export default function App() {
                 />
                 <input
                   type="text"
-                  placeholder="No WhatsApp Aktif"
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold"
+                  placeholder="WA"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
                   value={caregiverForm.phone}
                   onChange={(e) =>
                     setCaregiverForm({
@@ -485,8 +481,8 @@ export default function App() {
                 />
                 <input
                   type="text"
-                  placeholder="Password Akses"
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold"
+                  placeholder="Sandi"
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
                   value={caregiverForm.password}
                   onChange={(e) =>
                     setCaregiverForm({
@@ -498,7 +494,7 @@ export default function App() {
                 />
                 {editId && (
                   <select
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold"
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
                     value={caregiverForm.status}
                     onChange={(e) =>
                       setCaregiverForm({
@@ -507,8 +503,8 @@ export default function App() {
                       })
                     }
                   >
-                    <option value="Aktif">Status: Aktif</option>
-                    <option value="Berhenti">Status: Berhenti</option>
+                    <option value="Aktif">Aktif</option>
+                    <option value="Berhenti">Berhenti</option>
                   </select>
                 )}
                 <button
@@ -518,11 +514,7 @@ export default function App() {
                     editId ? "bg-orange-500" : "bg-green-600"
                   }`}
                 >
-                  {isLoading
-                    ? "..."
-                    : editId
-                    ? "Simpan Data"
-                    : "Daftarkan Pramurukti"}
+                  Simpan
                 </button>
               </form>
             )}
@@ -530,12 +522,7 @@ export default function App() {
 
           <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
             <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2 uppercase tracking-tight">
-              <ClipboardList className="w-5 h-5 text-slate-400" />
-              {activeAdminTab === "assignment"
-                ? "Penugasan Aktif"
-                : activeAdminTab === "patient"
-                ? "Daftar Pasien"
-                : "Daftar Pramurukti"}
+              <ClipboardList className="w-5 h-5 text-slate-400" /> List
             </h2>
 
             <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -550,7 +537,7 @@ export default function App() {
                         {p.name}
                       </p>
                       <p className="text-[10px] text-slate-500 font-bold truncate">
-                        {p.address} • {p.age} Thn
+                        {p.address}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -559,16 +546,16 @@ export default function App() {
                           setEditId(p.id);
                           setPatientForm(p);
                         }}
-                        className="p-2 bg-white text-orange-500 rounded-xl border border-orange-100 shadow-sm hover:bg-orange-500 hover:text-white transition-all"
+                        className="p-2 bg-white text-orange-500 rounded-xl border border-orange-100"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm("Hapus pasien ini?"))
+                          if (window.confirm("Hapus?"))
                             handleAction("DELETE_PATIENT", { id: p.id });
                         }}
-                        className="p-2 bg-white text-red-500 rounded-xl border border-red-100 shadow-sm hover:bg-red-500 hover:text-white transition-all"
+                        className="p-2 bg-white text-red-500 rounded-xl border border-red-100"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -593,7 +580,7 @@ export default function App() {
                             : "text-red-400"
                         }`}
                       >
-                        {c.status} • {c.phone}
+                        {c.status}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -602,16 +589,16 @@ export default function App() {
                           setEditId(c.id);
                           setCaregiverForm(c);
                         }}
-                        className="p-2 bg-white text-orange-500 rounded-xl border border-orange-100 shadow-sm hover:bg-orange-500 hover:text-white transition-all"
+                        className="p-2 bg-white text-orange-500 rounded-xl border border-orange-100"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm("Hapus pramurukti ini?"))
+                          if (window.confirm("Hapus?"))
                             handleAction("DELETE_CAREGIVER", { id: c.id });
                         }}
-                        className="p-2 bg-white text-red-500 rounded-xl border border-red-100 shadow-sm hover:bg-red-500 hover:text-white transition-all"
+                        className="p-2 bg-white text-red-500 rounded-xl border border-red-100"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -630,17 +617,17 @@ export default function App() {
                         key={a.id}
                         className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs"
                       >
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center mb-1">
                           <span className="font-black text-slate-800 uppercase">
-                            {p?.name || "Pasien ?"}
+                            {p?.name || "Pasien"}
                           </span>
-                          <span className="text-[10px] bg-white px-2 py-1 rounded-lg border font-black text-indigo-500">
-                            Mulai: {a.startDate}
+                          <span className="text-[9px] font-bold text-slate-400">
+                            {a.startDate}
                           </span>
                         </div>
-                        <div className="mt-2 text-indigo-600 font-bold flex items-center gap-1">
+                        <div className="text-indigo-600 font-bold flex items-center gap-1">
                           <UserCircle className="w-3 h-3" />{" "}
-                          {c?.name || "Caregiver ?"}
+                          {c?.name || "Caregiver"}
                         </div>
                       </div>
                     );
@@ -656,7 +643,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-sm">
       <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-slate-100">
         <div className="flex justify-center mb-6">
-          <div className="p-5 bg-indigo-600 rounded-3xl shadow-lg shadow-indigo-200">
+          <div className="p-5 bg-indigo-600 rounded-3xl shadow-lg">
             <HeartPulse className="w-12 h-12 text-white" />
           </div>
         </div>
@@ -685,7 +672,7 @@ export default function App() {
             </div>
             <div className="relative">
               <select
-                className="w-full p-5 border-2 border-slate-100 rounded-[1.5rem] bg-slate-50 font-bold text-slate-700 outline-none text-xs appearance-none cursor-pointer"
+                className="w-full p-5 border-2 border-slate-100 rounded-[1.5rem] bg-slate-50 font-bold text-slate-700 outline-none text-xs appearance-none"
                 onChange={(e) => {
                   const cg = caregivers.find((c) => c.id == e.target.value);
                   if (cg) {
@@ -694,7 +681,7 @@ export default function App() {
                   }
                 }}
               >
-                <option value="">-- PILIH NAMA ANDA --</option>
+                <option value="">-- PILIH NAMA --</option>
                 {caregivers
                   .filter((c) => c.status === "Aktif")
                   .map((c) => (
@@ -726,7 +713,7 @@ export default function App() {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Sandi Akses"
+                  placeholder="Sandi"
                   className={`w-full p-5 border-2 rounded-[1.5rem] bg-slate-50 outline-none font-bold text-center text-sm tracking-widest ${
                     loginError
                       ? "border-red-500 animate-pulse"
@@ -765,7 +752,7 @@ export default function App() {
                 }
                 className="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black text-xs uppercase shadow-xl active:scale-95 transition-all"
               >
-                Buka Dashboard
+                Masuk
               </button>
               <button
                 onClick={() => {
@@ -775,7 +762,7 @@ export default function App() {
                 }}
                 className="w-full py-2 text-slate-400 text-[10px] font-black uppercase tracking-widest"
               >
-                &larr; Ganti Akun
+                &larr; Kembali
               </button>
             </div>
           </div>
@@ -850,13 +837,13 @@ export default function App() {
           </div>
         </div>
         <h3 className="text-lg font-black text-slate-800 uppercase px-1">
-          Daftar Pasien Saya
+          Tugas Saya
         </h3>
         <div className="grid grid-cols-1 gap-4">
           {myPatients.map((p) => (
             <div
               key={p.id}
-              className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -880,11 +867,11 @@ export default function App() {
               {logForm.patientId === p.id ? (
                 <form
                   onSubmit={handleSaveLog}
-                  className="space-y-3 bg-slate-50 p-4 rounded-2xl animate-in zoom-in-95 duration-200"
+                  className="space-y-3 bg-slate-50 p-4 rounded-2xl"
                 >
                   <input
                     type="text"
-                    placeholder="Tindakan Utama"
+                    placeholder="Aksi Utama"
                     className="w-full p-4 rounded-xl border outline-none font-bold text-sm"
                     value={logForm.action}
                     onChange={(e) =>
@@ -894,7 +881,7 @@ export default function App() {
                   />
                   <input
                     type="text"
-                    placeholder="Tanda Vital (Tensi/Suhu)"
+                    placeholder="Vital (Tensi/Suhu)"
                     className="w-full p-4 rounded-xl border outline-none font-bold text-sm"
                     value={logForm.vitals}
                     onChange={(e) =>
@@ -902,7 +889,7 @@ export default function App() {
                     }
                   />
                   <textarea
-                    placeholder="Detail perawatan hari ini..."
+                    placeholder="Catatan..."
                     className="w-full p-4 rounded-xl border outline-none h-32 text-sm"
                     required
                     value={logForm.notes}
@@ -925,7 +912,7 @@ export default function App() {
                       disabled={isLoading}
                       className="flex-1 py-4 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase shadow-lg active:scale-95"
                     >
-                      {isLoading ? "..." : "Simpan Log"}
+                      {isLoading ? "..." : "Simpan"}
                     </button>
                   </div>
                 </form>
@@ -961,7 +948,7 @@ export default function App() {
             </h2>
             <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
               <span className="bg-slate-50 px-2 py-1 rounded border">
-                USIA: {selectedPatient.age} THN
+                USIA: {selectedPatient.age}
               </span>
               <span className="bg-slate-50 px-2 py-1 rounded border flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-indigo-400" />{" "}
@@ -973,7 +960,7 @@ export default function App() {
             </p>
           </div>
           <h3 className="text-lg font-black text-slate-800 uppercase mb-8 flex items-center gap-3">
-            <FileText className="w-5 h-5 text-indigo-500" /> Histori Rekam Medis
+            <FileText className="w-5 h-5 text-indigo-500" /> Histori
           </h3>
           <div className="relative border-l-2 border-slate-100 ml-3 space-y-10 pb-4">
             {history.map((log, i) => {
@@ -982,11 +969,7 @@ export default function App() {
                 <div key={i} className="relative pl-8">
                   <div className="absolute w-4 h-4 bg-white border-4 border-indigo-500 rounded-full -left-[9px] top-1"></div>
                   <div className="mb-2 text-xs font-black text-slate-400 uppercase flex items-center gap-2">
-                    {new Date(log.timestamp).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {new Date(log.timestamp).toLocaleDateString()}
                     <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg border">
                       Oleh: {cg?.name}
                     </span>
@@ -1007,11 +990,6 @@ export default function App() {
                 </div>
               );
             })}
-            {history.length === 0 && (
-              <p className="text-slate-400 font-bold ml-6 italic text-sm">
-                Belum ada catatan.
-              </p>
-            )}
           </div>
         </div>
       </div>
