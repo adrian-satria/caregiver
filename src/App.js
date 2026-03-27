@@ -27,28 +27,22 @@ import {
 } from "lucide-react";
 
 // --- KONFIGURASI ---
-// GANTI TEKS DI BAWAH INI DENGAN WEB APP URL FULL MILIK ANDA (TANPA TITIK TIGA "...")
+// GANTI URL DI BAWAH INI DENGAN WEB APP URL LENGKAP ANDA
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbxCXdd6UNRvG3uWz_exZ04RArBCxjf0BlKe7xr85ZaZxKX7vh5ndaI3tyjs9cALqQzzJQ/exec";
+  "https://script.google.com/macros/s/AKfycbw6H3YI1LwA7K_y8vY0L9o1S_vPq7n4T9r5e6.../exec";
 const ADMIN_PASSWORD_REQUIRED = "admin123";
 
-/**
- * Komponen Utama App
- * Semua sub-komponen didefinisikan di luar atau dipanggil secara stabil untuk mencegah state reset.
- */
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
 
-  // State Data
   const [patients, setPatients] = useState([]);
   const [caregivers, setCaregivers] = useState([]);
   const [careLogs, setCareLogs] = useState([]);
   const [assignments, setAssignments] = useState([]);
 
-  // --- AUTO-INJECT TAILWIND & INITIAL CHECK ---
   useEffect(() => {
     const injectTailwind = () => {
       if (!document.getElementById("tailwind-cdn")) {
@@ -59,7 +53,6 @@ export default function App() {
       }
     };
     injectTailwind();
-
     const checkTailwind = setInterval(() => {
       if (window.tailwind) {
         setIsReady(true);
@@ -69,63 +62,18 @@ export default function App() {
     return () => clearInterval(checkTailwind);
   }, []);
 
-  // --- DATA FETCHING ---
   const fetchData = async () => {
-    if (
-      !GAS_URL ||
-      GAS_URL.includes("MASUKKAN_URL") ||
-      GAS_URL.includes("...")
-    ) {
-      // Mock data untuk simulasi
-      setPatients([
-        {
-          id: 1,
-          name: "Bpk. Budi Santoso",
-          age: 72,
-          condition: "Pasca Stroke",
-          address: "Jl. Merdeka No. 10",
-        },
-        {
-          id: 2,
-          name: "Ibu Siti Aminah",
-          age: 65,
-          condition: "Diabetes",
-          address: "Komp. Hijau C4",
-        },
-      ]);
-      setCaregivers([
-        {
-          id: 1,
-          name: "Rina (Perawat)",
-          phone: "08123",
-          status: "Aktif",
-          password: "rina",
-        },
-        {
-          id: 2,
-          name: "Anton (Pramurukti)",
-          phone: "08987",
-          status: "Aktif",
-          password: "123",
-        },
-      ]);
-      return;
-    }
-
+    if (!GAS_URL || GAS_URL.includes("...")) return;
     setIsLoading(true);
     try {
       const response = await fetch(GAS_URL);
-      if (!response.ok) throw new Error("Network response was not ok");
       const result = await response.json();
-
       if (result.status === "success") {
         setPatients(result.patients || []);
         setCaregivers(result.caregivers || []);
         setAssignments(result.assignments || []);
         setCareLogs(
-          (result.careLogs || []).sort(
-            (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-          )
+          (result.careLogs || []).sort((a, b) => b.timestamp - a.timestamp)
         );
       }
     } catch (error) {
@@ -139,7 +87,6 @@ export default function App() {
     if (isReady) fetchData();
   }, [isReady]);
 
-  // --- HANDLER LOGOUT ---
   const handleLogout = () => {
     setCurrentUser(null);
     setSelectedPatient(null);
@@ -149,15 +96,14 @@ export default function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <Activity className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-        <p className="text-slate-500 font-bold animate-pulse">
-          Menyiapkan Antarmuka...
+        <p className="text-slate-500 font-bold animate-pulse uppercase text-xs tracking-widest">
+          Memuat Sistem...
         </p>
       </div>
     );
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 selection:bg-indigo-100 antialiased">
-      {/* Navbar */}
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-4 sm:px-6 h-20 flex items-center justify-between shadow-sm">
         <div
           className="flex items-center gap-3 cursor-pointer group"
@@ -189,7 +135,6 @@ export default function App() {
               <button
                 onClick={handleLogout}
                 className="p-3 bg-rose-50 text-rose-600 rounded-2xl active:scale-90 transition-all shadow-sm border border-rose-100"
-                title="Keluar"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -233,20 +178,18 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating Refresh Button */}
       <button
         onClick={fetchData}
         className={`fixed bottom-6 right-6 p-5 bg-white rounded-full shadow-2xl border border-slate-100 text-indigo-600 z-40 active:scale-75 transition-all flex items-center justify-center ${
           isLoading ? "animate-spin" : ""
         }`}
       >
-        <Activity className="w-6 h-6" title="Segarkan Data" />
+        <Activity className="w-6 h-6" />
       </button>
     </div>
   );
 }
 
-// --- SUB-KOMPONEN LOGIN ---
 function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
   const [loginStep, setLoginStep] = useState("role");
   const [tempCaregiver, setTempCaregiver] = useState(null);
@@ -255,19 +198,14 @@ function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
   const [loginError, setLoginError] = useState("");
 
   const handleAdminAuth = () => {
-    if (passwordInput === ADMIN_PASSWORD) {
-      setCurrentUser({ role: "admin" });
-    } else {
-      setLoginError("Sandi Admin Salah!");
-    }
+    if (passwordInput === ADMIN_PASSWORD) setCurrentUser({ role: "admin" });
+    else setLoginError("Sandi Admin Salah!");
   };
 
   const handleCaregiverAuth = () => {
-    if (tempCaregiver && passwordInput === String(tempCaregiver.password)) {
+    if (tempCaregiver && passwordInput === String(tempCaregiver.password))
       setCurrentUser({ role: "caregiver", data: tempCaregiver });
-    } else {
-      setLoginError("Sandi Salah!");
-    }
+    else setLoginError("Sandi Salah!");
   };
 
   return (
@@ -278,7 +216,7 @@ function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
             <HeartPulse className="w-12 h-12 text-white" />
           </div>
         </div>
-        <h1 className="text-3xl font-black text-center text-slate-800 mb-1 tracking-tighter uppercase italic leading-none">
+        <h1 className="text-3xl font-black text-center text-slate-800 mb-1 tracking-tighter uppercase italic italic">
           CareSync
         </h1>
         <p className="text-slate-400 text-center text-[10px] mb-10 font-bold uppercase tracking-[0.2em]">
@@ -301,31 +239,26 @@ function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
               </span>
               <div className="flex-grow border-t border-slate-100"></div>
             </div>
-            <div className="relative">
-              <select
-                className="w-full p-5 border-2 border-slate-100 rounded-[1.5rem] bg-slate-50 font-bold text-slate-700 outline-none text-xs appearance-none cursor-pointer"
-                onChange={(e) => {
-                  const cg = caregivers.find((c) => c.id == e.target.value);
-                  if (cg) {
-                    setTempCaregiver(cg);
-                    setLoginStep("caregiver_pass");
-                    setLoginError("");
-                  }
-                }}
-              >
-                <option value="">-- PILIH NAMA ANDA --</option>
-                {caregivers
-                  .filter((c) => c.status === "Aktif")
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-              </select>
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                <ChevronRight className="w-4 h-4 rotate-90" />
-              </div>
-            </div>
+            <select
+              className="w-full p-5 border-2 border-slate-100 rounded-[1.5rem] bg-slate-50 font-bold text-slate-700 outline-none text-xs appearance-none"
+              onChange={(e) => {
+                const cg = caregivers.find((c) => c.id == e.target.value);
+                if (cg) {
+                  setTempCaregiver(cg);
+                  setLoginStep("caregiver_pass");
+                  setLoginError("");
+                }
+              }}
+            >
+              <option value="">-- PILIH NAMA ANDA --</option>
+              {caregivers
+                .filter((c) => c.status === "Aktif")
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
           </div>
         ) : (
           <div className="space-y-4">
@@ -334,9 +267,7 @@ function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
                 type={showPassword ? "text" : "password"}
                 placeholder="Sandi"
                 className={`w-full p-5 border-2 rounded-[1.5rem] bg-slate-50 outline-none font-bold text-center text-sm pr-12 ${
-                  loginError
-                    ? "border-red-500"
-                    : "border-slate-100 focus:border-indigo-500"
+                  loginError ? "border-red-500" : "border-slate-100"
                 }`}
                 value={passwordInput}
                 onChange={(e) => {
@@ -391,7 +322,6 @@ function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
   );
 }
 
-// --- SUB-KOMPONEN ADMIN ---
 function AdminDashboard({
   patients,
   caregivers,
@@ -403,7 +333,6 @@ function AdminDashboard({
   const [activeAdminTab, setActiveAdminTab] = useState("assignment");
   const [editId, setEditId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
   const [assignForm, setAssignForm] = useState({
     patientId: "",
     caregiverId: "",
@@ -421,24 +350,8 @@ function AdminDashboard({
     status: "Aktif",
   });
 
-  const resetForms = () => {
-    setEditId(null);
-    setPatientForm({ name: "", age: "", condition: "", address: "" });
-    setCaregiverForm({ name: "", phone: "", password: "", status: "Aktif" });
-    setAssignForm({ patientId: "", caregiverId: "" });
-  };
-
   const handleAction = async (type, data) => {
     setIsLoading(true);
-    if (
-      !GAS_URL ||
-      GAS_URL.includes("...") ||
-      GAS_URL.includes("MASUKKAN_URL")
-    ) {
-      alert("Mode Simulasi: URL Google Apps Script tidak valid.");
-      setIsLoading(false);
-      return;
-    }
     try {
       const res = await fetch(GAS_URL, {
         method: "POST",
@@ -448,20 +361,17 @@ function AdminDashboard({
       const result = await res.json();
       if (result.status === "success") {
         fetchData();
-        resetForms();
-      } else {
-        alert("Error: " + result.message);
-      }
+        setEditId(null);
+      } else alert("Gagal: " + result.message);
     } catch (e) {
-      alert("Gagal Simpan!");
+      alert("Error Koneksi!");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Statistik */}
+    <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           {
@@ -479,14 +389,14 @@ function AdminDashboard({
             bg: "bg-green-50",
           },
           {
-            label: "Penugasan",
+            label: "Aktif",
             val: assignments.length,
             icon: UserCheck,
             color: "text-indigo-500",
             bg: "bg-indigo-50",
           },
           {
-            label: "Total Log",
+            label: "Catatan",
             val: careLogs.length,
             icon: ClipboardList,
             color: "text-orange-500",
@@ -502,346 +412,196 @@ function AdminDashboard({
             >
               <s.icon className={`w-4 h-4 ${s.color}`} />
             </div>
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
               {s.label}
             </p>
             <h3 className="text-lg font-black text-slate-800">{s.val}</h3>
           </div>
         ))}
       </div>
-
-      <div className="flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm gap-1 overflow-x-auto no-scrollbar">
+      <div className="flex bg-white p-1 rounded-2xl border shadow-sm gap-1">
         {["assignment", "patient", "caregiver"].map((tab) => (
           <button
             key={tab}
-            onClick={() => {
-              setActiveAdminTab(tab);
-              resetForms();
-            }}
-            className={`flex-1 py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
+            onClick={() => setActiveAdminTab(tab)}
+            className={`flex-1 py-3 px-4 text-[10px] font-black uppercase rounded-xl transition-all ${
               activeAdminTab === tab
                 ? "bg-slate-900 text-white shadow-md"
-                : "text-slate-400 hover:bg-slate-50"
+                : "text-slate-400"
             }`}
           >
-            {tab === "assignment"
-              ? "Penugasan"
-              : tab === "patient"
-              ? "Kelola Pasien"
-              : "Kelola Care"}
+            {tab}
           </button>
         ))}
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm h-fit">
-          <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center justify-between uppercase tracking-tight">
-            <span className="flex items-center gap-2">
-              {editId ? (
-                <Pencil className="w-5 h-5 text-orange-500" />
-              ) : (
-                <Plus className="w-5 h-5 text-indigo-600" />
-              )}
-              {editId ? "Edit Data" : "Tambah Baru"}
-            </span>
-            {editId && (
-              <button
-                onClick={resetForms}
-                className="text-xs font-bold text-red-500 flex items-center gap-1 bg-red-50 px-3 py-1 rounded-full"
-              >
-                <X className="w-3 h-3" /> Batal
-              </button>
-            )}
-          </h2>
-
-          {activeAdminTab === "assignment" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAction("ADD_ASSIGNMENT", assignForm);
-              }}
-              className="space-y-4"
+      <div className="bg-white p-6 rounded-[2rem] border shadow-sm">
+        {activeAdminTab === "assignment" && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAction("ADD_ASSIGNMENT", {
+                ...assignForm,
+                startDate: new Date().toLocaleDateString("id-ID"),
+              });
+            }}
+            className="space-y-4"
+          >
+            <h2 className="text-lg font-black uppercase">
+              Tugaskan Pramurukti
+            </h2>
+            <select
+              className="w-full p-4 bg-slate-50 border rounded-2xl"
+              value={assignForm.patientId}
+              onChange={(e) =>
+                setAssignForm({ ...assignForm, patientId: e.target.value })
+              }
+              required
             >
-              <select
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                value={assignForm.patientId}
-                onChange={(e) =>
-                  setAssignForm({ ...assignForm, patientId: e.target.value })
-                }
-                required
-              >
-                <option value="">-- Pilih Pasien --</option>
-                {patients.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
+              <option value="">-- Pilih Pasien --</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className="w-full p-4 bg-slate-50 border rounded-2xl"
+              value={assignForm.caregiverId}
+              onChange={(e) =>
+                setAssignForm({ ...assignForm, caregiverId: e.target.value })
+              }
+              required
+            >
+              <option value="">-- Pilih Pramurukti --</option>
+              {caregivers
+                .filter((c) => c.status === "Aktif")
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
-              </select>
-              <select
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                value={assignForm.caregiverId}
-                onChange={(e) =>
-                  setAssignForm({ ...assignForm, caregiverId: e.target.value })
-                }
-                required
-              >
-                <option value="">-- Pilih Pramurukti --</option>
-                {caregivers
-                  .filter((c) => c.status === "Aktif")
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-              </select>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all"
-              >
-                {isLoading ? "Memproses..." : "Tugaskan Sekarang"}
-              </button>
-            </form>
-          )}
-
-          {activeAdminTab === "patient" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAction(
-                  editId ? "UPDATE_PATIENT" : "ADD_PATIENT",
-                  editId ? { ...patientForm, id: editId } : patientForm
-                );
-              }}
-              className="space-y-4"
+            </select>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest"
             >
+              {isLoading ? "..." : "SIMPAN PENUGASAN"}
+            </button>
+          </form>
+        )}
+        {activeAdminTab === "patient" && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAction("ADD_PATIENT", patientForm);
+            }}
+            className="space-y-4"
+          >
+            <h2 className="text-lg font-black uppercase">Tambah Pasien</h2>
+            <input
+              type="text"
+              placeholder="Nama Pasien"
+              className="w-full p-4 bg-slate-50 border rounded-2xl"
+              value={patientForm.name}
+              onChange={(e) =>
+                setPatientForm({ ...patientForm, name: e.target.value })
+              }
+              required
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="number"
+                placeholder="Usia"
+                className="p-4 bg-slate-50 border rounded-2xl"
+                value={patientForm.age}
+                onChange={(e) =>
+                  setPatientForm({ ...patientForm, age: e.target.value })
+                }
+                required
+              />
               <input
                 type="text"
-                placeholder="Nama Pasien"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                value={patientForm.name}
+                placeholder="Alamat"
+                className="p-4 bg-slate-50 border rounded-2xl"
+                value={patientForm.address}
                 onChange={(e) =>
-                  setPatientForm({ ...patientForm, name: e.target.value })
+                  setPatientForm({ ...patientForm, address: e.target.value })
                 }
                 required
               />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="number"
-                  placeholder="Usia"
-                  className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                  value={patientForm.age}
-                  onChange={(e) =>
-                    setPatientForm({ ...patientForm, age: e.target.value })
-                  }
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Alamat"
-                  className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                  value={patientForm.address}
-                  onChange={(e) =>
-                    setPatientForm({ ...patientForm, address: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <textarea
-                placeholder="Diagnosa Utama"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm h-24 font-medium outline-none"
-                value={patientForm.condition}
-                onChange={(e) =>
-                  setPatientForm({ ...patientForm, condition: e.target.value })
-                }
-                required
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full py-4 text-white rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 ${
-                  editId ? "bg-orange-500" : "bg-blue-600"
-                }`}
-              >
-                {isLoading
-                  ? "..."
-                  : editId
-                  ? "Simpan Perubahan"
-                  : "Daftarkan Pasien"}
-              </button>
-            </form>
-          )}
-
-          {activeAdminTab === "caregiver" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAction(
-                  editId ? "UPDATE_CAREGIVER" : "ADD_CAREGIVER",
-                  editId ? { ...caregiverForm, id: editId } : caregiverForm
-                );
-              }}
-              className="space-y-4"
+            </div>
+            <textarea
+              placeholder="Diagnosa"
+              className="w-full p-4 bg-slate-50 border rounded-2xl h-24"
+              value={patientForm.condition}
+              onChange={(e) =>
+                setPatientForm({ ...patientForm, condition: e.target.value })
+              }
+              required
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase"
             >
-              <input
-                type="text"
-                placeholder="Nama Lengkap"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                value={caregiverForm.name}
-                onChange={(e) =>
-                  setCaregiverForm({ ...caregiverForm, name: e.target.value })
-                }
-                required
-              />
-              <input
-                type="text"
-                placeholder="WA / HP"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                value={caregiverForm.phone}
-                onChange={(e) =>
-                  setCaregiverForm({ ...caregiverForm, phone: e.target.value })
-                }
-                required
-              />
-              <input
-                type="text"
-                placeholder="Sandi Login"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none"
-                value={caregiverForm.password}
-                onChange={(e) =>
-                  setCaregiverForm({
-                    ...caregiverForm,
-                    password: e.target.value,
-                  })
-                }
-                required
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full py-4 text-white rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 ${
-                  editId ? "bg-orange-500" : "bg-green-600"
-                }`}
-              >
-                {isLoading
-                  ? "..."
-                  : editId
-                  ? "Simpan Data"
-                  : "Daftarkan Pramurukti"}
-              </button>
-            </form>
-          )}
-        </div>
-
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-          <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2 uppercase tracking-tight">
-            Daftar Data
-          </h2>
-          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-            {activeAdminTab === "patient" &&
-              patients.map((p) => (
-                <div
-                  key={p.id}
-                  className="p-4 bg-slate-50 rounded-2xl border flex justify-between items-center text-xs group"
-                >
-                  <div className="max-w-[70%]">
-                    <p className="font-black uppercase mb-1">{p.name}</p>
-                    <p className="text-[10px] text-slate-500 truncate">
-                      {p.address} • {p.age} Thn
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setEditId(p.id);
-                        setPatientForm(p);
-                      }}
-                      className="p-2 bg-white text-orange-500 rounded-xl border border-orange-100 hover:bg-orange-500 hover:text-white transition-all"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm("Hapus?"))
-                          handleAction("DELETE_PATIENT", { id: p.id });
-                      }}
-                      className="p-2 bg-white text-red-500 rounded-xl border border-red-100 hover:bg-red-500 hover:text-white transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            {activeAdminTab === "caregiver" &&
-              caregivers.map((c) => (
-                <div
-                  key={c.id}
-                  className="p-4 bg-slate-50 rounded-2xl border flex justify-between items-center text-xs"
-                >
-                  <div>
-                    <p className="font-black uppercase mb-1">{c.name}</p>
-                    <p
-                      className={`text-[9px] font-black ${
-                        c.status === "Aktif" ? "text-green-500" : "text-red-400"
-                      }`}
-                    >
-                      {c.status} • {c.phone}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setEditId(c.id);
-                        setCaregiverForm(c);
-                      }}
-                      className="p-2 bg-white text-orange-500 rounded-xl border border-orange-100 hover:bg-orange-500 hover:text-white transition-all"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm("Hapus?"))
-                          handleAction("DELETE_CAREGIVER", { id: c.id });
-                      }}
-                      className="p-2 bg-white text-red-500 rounded-xl border border-red-100 hover:bg-red-500 hover:text-white transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            {activeAdminTab === "assignment" &&
-              assignments
-                .filter((a) => a.status_penugasan === "Aktif")
-                .map((a) => {
-                  const p = patients.find((x) => x.id == a.patientId);
-                  const c = caregivers.find((x) => x.id == a.caregiverId);
-                  return (
-                    <div
-                      key={a.id}
-                      className="p-4 bg-slate-50 rounded-2xl border text-xs shadow-sm"
-                    >
-                      <div className="flex justify-between font-black uppercase mb-1">
-                        <span>{p?.name || "Pasien"}</span>
-                        <span className="text-[9px] text-slate-400">
-                          {a.startDate}
-                        </span>
-                      </div>
-                      <div className="text-indigo-600 font-bold flex items-center gap-1">
-                        <UserCircle className="w-3 h-3" />{" "}
-                        {c?.name || "Caregiver"}
-                      </div>
-                    </div>
-                  );
-                })}
-          </div>
-        </div>
+              {isLoading ? "..." : "DAFTARKAN PASIEN"}
+            </button>
+          </form>
+        )}
+        {activeAdminTab === "caregiver" && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAction("ADD_CAREGIVER", caregiverForm);
+            }}
+            className="space-y-4"
+          >
+            <h2 className="text-lg font-black uppercase">Tambah Caregiver</h2>
+            <input
+              type="text"
+              placeholder="Nama Lengkap"
+              className="w-full p-4 bg-slate-50 border rounded-2xl"
+              value={caregiverForm.name}
+              onChange={(e) =>
+                setCaregiverForm({ ...caregiverForm, name: e.target.value })
+              }
+              required
+            />
+            <input
+              type="text"
+              placeholder="No WhatsApp"
+              className="w-full p-4 bg-slate-50 border rounded-2xl"
+              value={caregiverForm.phone}
+              onChange={(e) =>
+                setCaregiverForm({ ...caregiverForm, phone: e.target.value })
+              }
+              required
+            />
+            <input
+              type="text"
+              placeholder="Sandi Login"
+              className="w-full p-4 bg-slate-50 border rounded-2xl"
+              value={caregiverForm.password}
+              onChange={(e) =>
+                setCaregiverForm({ ...caregiverForm, password: e.target.value })
+              }
+              required
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase"
+            >
+              {isLoading ? "..." : "DAFTARKAN CAREGIVER"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
 }
 
-// --- SUB-KOMPONEN CAREGIVER ---
 function CaregiverDashboard({
   currentUser,
   patients,
@@ -851,14 +611,14 @@ function CaregiverDashboard({
   GAS_URL,
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  // Perhatikan penggunaan huruf kecil (caregiverid, status_penugasan) sesuai mapping backend
   const myAssignments = assignments.filter(
     (a) =>
-      a.caregiverId == currentUser.data.id && a.status_penugasan === "Aktif"
+      a.caregiverid == currentUser.data.id && a.status_penugasan === "Aktif"
   );
   const myPatients = patients.filter((p) =>
-    myAssignments.some((a) => a.patientId == p.id)
+    myAssignments.some((a) => a.patientid == p.id)
   );
-
   const [logForm, setLogForm] = useState({
     patientId: null,
     action: "",
@@ -868,48 +628,40 @@ function CaregiverDashboard({
 
   const handleSaveLog = async (e) => {
     e.preventDefault();
-    const payload = {
-      ...logForm,
-      caregiverId: currentUser.data.id,
-      timestamp: new Date().toISOString(),
-    };
     setIsLoading(true);
-    if (!GAS_URL || GAS_URL.includes("...")) {
-      alert("Mode Simulasi Aktif.");
-      setIsLoading(false);
-      return;
-    }
     try {
-      const res = await fetch(GAS_URL, {
+      await fetch(GAS_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ type: "ADD_LOG", data: payload }),
+        body: JSON.stringify({
+          type: "ADD_LOG",
+          data: {
+            ...logForm,
+            caregiverId: currentUser.data.id,
+            timestamp: new Date().toISOString(),
+          },
+        }),
       });
-      const result = await res.json();
-      if (result.status === "success") {
-        fetchData();
-        setLogForm({ patientId: null, action: "", vitals: "", notes: "" });
-      }
+      fetchData();
+      setLogForm({ patientId: null, action: "", vitals: "", notes: "" });
     } catch (e) {
-      alert("Gagal Simpan Log!");
+      alert("Gagal!");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="bg-indigo-600 p-8 rounded-[2rem] text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+    <div className="space-y-6">
+      <div className="bg-indigo-600 p-8 rounded-[2rem] text-white shadow-xl flex justify-between items-center flex-col md:flex-row gap-4">
         <div>
-          <p className="text-indigo-200 font-bold text-[10px] uppercase mb-1 tracking-widest leading-none">
+          <p className="text-indigo-200 font-bold text-[10px] uppercase mb-1">
             Status: Aktif Bertugas
           </p>
           <h2 className="text-2xl font-black">{currentUser.data.name}</h2>
         </div>
         <div className="bg-white/10 px-6 py-3 rounded-2xl border border-white/20 text-center">
-          <p className="text-[9px] font-black uppercase tracking-widest">
-            Pasien
-          </p>
+          <p className="text-[9px] font-black uppercase">Pasien</p>
           <p className="text-2xl font-black">{myPatients.length}</p>
         </div>
       </div>
@@ -917,116 +669,103 @@ function CaregiverDashboard({
         Daftar Pasien Saya
       </h3>
       <div className="grid grid-cols-1 gap-4">
-        {myPatients.length === 0 ? (
-          <div className="bg-white p-12 rounded-[2rem] border-2 border-dashed text-center text-slate-400">
-            <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-20" />
-            <p className="font-bold uppercase text-xs">
-              Belum ada penugasan aktif
-            </p>
-          </div>
-        ) : (
-          myPatients.map((p) => (
-            <div
-              key={p.id}
-              className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h4 className="font-black text-xl text-slate-800 uppercase leading-none">
-                    {p.name}
-                  </h4>
-                  <p className="text-[10px] font-black text-slate-400 uppercase mt-2 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-rose-400" /> {p.address}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedPatient(p)}
-                  className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl active:scale-90 transition-all shadow-sm border border-indigo-100"
-                >
-                  <FileText className="w-5 h-5" />
-                </button>
+        {myPatients.map((p) => (
+          <div
+            key={p.id}
+            className="bg-white rounded-[2rem] border shadow-sm p-6"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h4 className="font-black text-xl text-slate-800 uppercase leading-none">
+                  {p.name}
+                </h4>
+                <p className="text-[10px] font-black text-slate-400 uppercase mt-2">
+                  {p.address}
+                </p>
               </div>
-              <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 mb-6 font-bold text-rose-800 text-sm leading-tight italic">
-                Diagnosa: {p.condition}
-              </div>
-              {logForm.patientId === p.id ? (
-                <form
-                  onSubmit={handleSaveLog}
-                  className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 animate-in zoom-in-95 duration-200"
-                >
-                  <input
-                    type="text"
-                    placeholder="Tindakan Utama"
-                    className="w-full p-4 rounded-xl border outline-none font-bold text-sm"
-                    value={logForm.action}
-                    onChange={(e) =>
-                      setLogForm({ ...logForm, action: e.target.value })
-                    }
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Vitals (Tensi/Suhu)"
-                    className="w-full p-4 rounded-xl border outline-none font-bold text-sm"
-                    value={logForm.vitals}
-                    onChange={(e) =>
-                      setLogForm({ ...logForm, vitals: e.target.value })
-                    }
-                  />
-                  <textarea
-                    placeholder="Catatan perawatan hari ini..."
-                    className="w-full p-4 rounded-xl border outline-none h-32 text-sm font-medium"
-                    required
-                    value={logForm.notes}
-                    onChange={(e) =>
-                      setLogForm({ ...logForm, notes: e.target.value })
-                    }
-                  ></textarea>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setLogForm({ ...logForm, patientId: null })
-                      }
-                      className="flex-1 py-4 bg-slate-200 rounded-xl text-xs font-black uppercase text-slate-600 tracking-widest"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="flex-1 py-4 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase shadow-lg active:scale-95 transition-all tracking-widest"
-                    >
-                      {isLoading ? "..." : "SIMPAN"}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <button
-                  onClick={() =>
-                    setLogForm({
-                      ...logForm,
-                      patientId: p.id,
-                      action: "",
-                      vitals: "",
-                      notes: "",
-                    })
-                  }
-                  className="w-full py-5 flex items-center justify-center gap-3 bg-slate-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-                >
-                  <Plus className="w-5 h-5 text-indigo-400" /> Tulis Log
-                  Perawatan
-                </button>
-              )}
+              <button
+                onClick={() => setSelectedPatient(p)}
+                className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl active:scale-90 shadow-sm"
+              >
+                <FileText className="w-5 h-5" />
+              </button>
             </div>
-          ))
-        )}
+            <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 mb-6 font-bold text-rose-800 text-sm italic">
+              Diagnosa: {p.condition}
+            </div>
+            {logForm.patientId === p.id ? (
+              <form
+                onSubmit={handleSaveLog}
+                className="space-y-3 bg-slate-50 p-4 rounded-2xl border"
+              >
+                <input
+                  type="text"
+                  placeholder="Tindakan"
+                  className="w-full p-4 rounded-xl border font-bold text-sm"
+                  value={logForm.action}
+                  onChange={(e) =>
+                    setLogForm({ ...logForm, action: e.target.value })
+                  }
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Vitals (Tensi/Suhu)"
+                  className="w-full p-4 rounded-xl border font-bold text-sm"
+                  value={logForm.vitals}
+                  onChange={(e) =>
+                    setLogForm({ ...logForm, vitals: e.target.value })
+                  }
+                />
+                <textarea
+                  placeholder="Catatan..."
+                  className="w-full p-4 rounded-xl border h-32 text-sm font-medium"
+                  required
+                  value={logForm.notes}
+                  onChange={(e) =>
+                    setLogForm({ ...logForm, notes: e.target.value })
+                  }
+                ></textarea>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLogForm({ ...logForm, patientId: null })}
+                    className="flex-1 py-4 bg-slate-200 rounded-xl text-xs font-black uppercase"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 py-4 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase shadow-lg"
+                  >
+                    {isLoading ? "..." : "SIMPAN"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={() =>
+                  setLogForm({
+                    ...logForm,
+                    patientId: p.id,
+                    action: "",
+                    vitals: "",
+                    notes: "",
+                  })
+                }
+                className="w-full py-5 flex items-center justify-center gap-3 bg-slate-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95"
+              >
+                <Plus className="w-5 h-5" /> Tulis Catatan Baru
+              </button>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// --- SUB-KOMPONEN DETAIL PASIEN ---
 function PatientDetail({
   selectedPatient,
   setSelectedPatient,
@@ -1038,68 +777,52 @@ function PatientDetail({
     <div className="space-y-6 animate-in zoom-in-95 duration-300">
       <button
         onClick={() => setSelectedPatient(null)}
-        className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest bg-white px-6 py-3 rounded-2xl border border-slate-100 active:scale-95 mb-2 shadow-sm"
+        className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest bg-white px-6 py-3 rounded-2xl border active:scale-95 shadow-sm"
       >
         &larr; Kembali
       </button>
-      <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-        <div className="border-b border-slate-50 pb-6 mb-8 text-center sm:text-left">
-          <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase mb-2 leading-none">
-            {selectedPatient.name}
-          </h2>
-          <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <span className="bg-slate-50 px-2 py-1 rounded border">
-              USIA: {selectedPatient.age} THN
-            </span>
-            <span className="bg-slate-50 px-2 py-1 rounded border flex items-center gap-1 text-indigo-500 font-bold">
-              <MapPin className="w-3 h-3" /> {selectedPatient.address}
-            </span>
-          </div>
-          <p className="mt-4 text-sm font-bold text-rose-500 uppercase tracking-tight italic leading-tight">
-            Diagnosa: {selectedPatient.condition}
-          </p>
+      <div className="bg-white p-6 sm:p-8 rounded-[2rem] border shadow-sm">
+        <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase mb-4">
+          {selectedPatient.name}
+        </h2>
+        <div className="flex gap-2 text-[10px] font-black text-slate-400 uppercase mb-8">
+          <span className="bg-slate-50 px-2 py-1 rounded border">
+            USIA: {selectedPatient.age} THN
+          </span>
+          <span className="bg-slate-50 px-2 py-1 rounded border">
+            {selectedPatient.address}
+          </span>
         </div>
-        <h3 className="text-lg font-black text-slate-800 uppercase mb-8 flex items-center gap-3">
+        <h3 className="text-lg font-black uppercase mb-8 flex items-center gap-3">
           <FileText className="w-5 h-5 text-indigo-500" /> Histori Rekam Medis
         </h3>
-        <div className="relative border-l-2 border-slate-100 ml-3 space-y-10 pb-4">
-          {history.length === 0 ? (
-            <p className="text-slate-400 font-bold ml-6 italic text-sm">
-              Belum ada catatan medis.
-            </p>
-          ) : (
-            history.map((log, i) => {
-              const cg = caregivers.find((x) => x.id == log.caregiverid);
-              return (
-                <div key={i} className="relative pl-8">
-                  <div className="absolute w-4 h-4 bg-white border-4 border-indigo-500 rounded-full -left-[9px] top-1 shadow-md"></div>
-                  <div className="mb-2 text-xs font-black text-slate-400 uppercase flex items-center gap-2">
-                    {new Date(log.timestamp).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                    <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-100 text-[8px] tracking-widest font-black">
-                      OLEH: {cg?.name || "Caregiver"}
-                    </span>
-                  </div>
-                  <div className="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 shadow-sm text-sm">
-                    <p className="font-black text-indigo-900 mb-1 uppercase tracking-tight">
-                      {log.action || "Perawatan Rutin"}
-                    </p>
-                    <p className="text-slate-600 italic font-medium leading-relaxed">
-                      "{log.notes}"
-                    </p>
-                    {log.vitals && (
-                      <div className="mt-4 text-[10px] font-black text-rose-500 flex items-center gap-1 uppercase tracking-widest bg-white w-fit px-3 py-1 rounded-full border border-rose-100 shadow-sm">
-                        <HeartPulse className="w-3 h-3" /> VITAL: {log.vitals}
-                      </div>
-                    )}
-                  </div>
+        <div className="relative border-l-2 ml-3 space-y-10 pb-4">
+          {history.map((log, i) => {
+            const cg = caregivers.find((x) => x.id == log.caregiverid);
+            return (
+              <div key={i} className="relative pl-8">
+                <div className="absolute w-4 h-4 bg-white border-4 border-indigo-500 rounded-full -left-[9px] top-1 shadow-md"></div>
+                <div className="mb-2 text-xs font-black text-slate-400 uppercase">
+                  {new Date(log.timestamp).toLocaleDateString("id-ID")}{" "}
+                  <span className="ml-2 text-indigo-600 border border-indigo-100 px-2 py-0.5 rounded">
+                    Oleh: {cg?.name}
+                  </span>
                 </div>
-              );
-            })
-          )}
+                <div className="bg-slate-50 p-5 rounded-[1.5rem] border shadow-sm text-sm">
+                  <p className="font-black text-indigo-900 mb-1 uppercase">
+                    {log.action}
+                  </p>
+                  <p className="text-slate-600 italic">"{log.notes}"</p>
+                  {log.vitals && (
+                    <div className="mt-4 text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                      <HeartPulse className="w-3 h-3 inline mr-1" />{" "}
+                      {log.vitals}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
