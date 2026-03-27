@@ -28,7 +28,7 @@ import {
 
 export default function App() {
   // --- KONFIGURASI ---
-  // GANTI URL DI BAWAH INI DENGAN WEB APP URL ANDA DARI GOOGLE APPS SCRIPT
+  // GANTI TEKS DI BAWAH INI DENGAN WEB APP URL FULL MILIK ANDA (TANPA TITIK TIGA "...")
   const GAS_URL =
     "https://script.google.com/macros/s/AKfycbwyq2Dyt1GZ5nlIGLC7TtFsVnnd-9_j9xPQIubQQmywpE2diR8ZBa3MRuK3sb7us_ScRQ/exec";
   const ADMIN_PASSWORD_REQUIRED = "admin123";
@@ -156,10 +156,11 @@ export default function App() {
   };
 
   const fetchData = async () => {
-    // Memperbaiki pengecekan URL (jika URL masih mengandung '...' atau default bawaan)
+    // Mengecek apakah URL belum diganti atau masih memuat format terpotong
     if (
-      GAS_URL.includes("...") ||
-      GAS_URL.includes("AKfycbw6H3YI1LwA7K_y8vY0L9o1S_vPq7n4T9r5e6")
+      !GAS_URL ||
+      GAS_URL.includes("MASUKKAN_URL") ||
+      GAS_URL.includes("...")
     ) {
       loadMockData();
       return;
@@ -183,7 +184,6 @@ export default function App() {
       }
     } catch (error) {
       console.error("Fetch error:", error);
-      // Jika fetch gagal (karena URL tidak valid, diblokir CORS, dsb), gunakan mock data agar aplikasi tidak crash
       loadMockData();
     } finally {
       setIsLoading(false);
@@ -225,11 +225,15 @@ export default function App() {
 
   const handleAction = async (type, data) => {
     setIsLoading(true);
+    // Pengecekan URL wajib valid
     if (
-      GAS_URL.includes("...") ||
-      GAS_URL.includes("AKfycbw6H3YI1LwA7K_y8vY0L9o1S_vPq7n4T9r5e6")
+      !GAS_URL ||
+      GAS_URL.includes("MASUKKAN_URL") ||
+      GAS_URL.includes("...")
     ) {
-      alert("Mode Simulasi: Anda belum memasukkan GAS_URL yang valid.");
+      alert(
+        "Penyimpanan Gagal: Anda belum memasukkan URL Google Apps Script yang valid (GAS_URL) ke dalam kode sumber."
+      );
       setIsLoading(false);
       return;
     }
@@ -249,7 +253,7 @@ export default function App() {
       }
     } catch (e) {
       alert(
-        "Koneksi Gagal! Pastikan Web App URL benar dan izin diset ke 'Anyone'."
+        "Koneksi Gagal! Pastikan Web App URL benar dan pengaturan izin Apps Script diset ke 'Anyone'."
       );
     } finally {
       setIsLoading(false);
