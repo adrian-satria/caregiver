@@ -24,10 +24,10 @@ import {
   Trash2,
   X,
   CheckCircle2,
+  History,
 } from "lucide-react";
 
 // --- KONFIGURASI ---
-// GANTI URL DI BAWAH INI DENGAN WEB APP URL LENGKAP ANDA
 const GAS_URL =
   "https://script.google.com/macros/s/AKfycbxCXdd6UNRvG3uWz_exZ04RArBCxjf0BlKe7xr85ZaZxKX7vh5ndaI3tyjs9cALqQzzJQ/exec";
 const ADMIN_PASSWORD_REQUIRED = "admin123";
@@ -38,13 +38,11 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
 
-  // State Data
   const [patients, setPatients] = useState([]);
   const [caregivers, setCaregivers] = useState([]);
   const [careLogs, setCareLogs] = useState([]);
   const [assignments, setAssignments] = useState([]);
 
-  // --- AUTO-INJECT TAILWIND ---
   useEffect(() => {
     const injectTailwind = () => {
       if (!document.getElementById("tailwind-cdn")) {
@@ -55,7 +53,6 @@ export default function App() {
       }
     };
     injectTailwind();
-
     const checkTailwind = setInterval(() => {
       if (window.tailwind) {
         setIsReady(true);
@@ -65,77 +62,39 @@ export default function App() {
     return () => clearInterval(checkTailwind);
   }, []);
 
-  // --- DATA FETCHING ---
-  const fetchData = async () => {
-    if (!GAS_URL || GAS_URL.includes("...")) {
-      // Data Simulasi jika URL belum benar
-      setPatients([
-        {
-          id: 1,
-          name: "Bpk. Budi Santoso",
-          age: 72,
-          condition: "Pasca Stroke",
-          address: "Jakarta",
-        },
-        {
-          id: 2,
-          name: "Ibu Siti Aminah",
-          age: 65,
-          condition: "Diabetes",
-          address: "Depok",
-        },
-      ]);
-      setCaregivers([
-        {
-          id: 1,
-          name: "Rina (Perawat)",
-          phone: "08123",
-          status: "Aktif",
-          password: "123",
-        },
-        {
-          id: 2,
-          name: "Anton (Pramurukti)",
-          phone: "08987",
-          status: "Aktif",
-          password: "123",
-        },
-      ]);
-      setAssignments([
-        {
-          id: 1,
-          patientid: 1,
-          caregiverid: 1,
-          startdate: "2024-03-20",
-          status_penugasan: "Aktif",
-        },
-      ]);
-      setCareLogs([
-        {
-          id: 101,
-          patientid: 1,
-          caregiverid: 1,
-          timestamp: new Date().toISOString(),
-          action: "Pemberian Obat",
-          notes: "Pasien kooperatif.",
-          vitals: "Tensi 120/80",
-        },
-      ]);
-      return;
-    }
+  // --- FUNGSI NORMALISASI KUNCI (Mencegah Bug Penugasan Kosong) ---
+  const normalizeData = (arr) => {
+    if (!Array.isArray(arr)) return [];
+    return arr.map((item) => {
+      const newObj = {};
+      for (let key in item) {
+        // Mengubah "Status Penugasan" atau "status_penugasan" menjadi "statuspenugasan"
+        const cleanKey = key.toLowerCase().replace(/_|\s/g, "");
+        newObj[cleanKey] = item[key];
+      }
+      return newObj;
+    });
+  };
 
+  const fetchData = async () => {
+    if (!GAS_URL || GAS_URL.includes("...")) return;
     setIsLoading(true);
     try {
       const response = await fetch(GAS_URL);
       const result = await response.json();
       if (result.status === "success") {
-        setPatients(result.patients || []);
-        setCaregivers(result.caregivers || []);
-        setAssignments(result.assignments || []);
+        // Normalisasi semua data agar kunci seragam (lowercase, no space, no underscore)
+        setPatients(normalizeData(result.patients));
+        setCaregivers(normalizeData(result.caregivers));
+        setAssignments(normalizeData(result.assignments));
+
+        const normalizedLogs = normalizeData(result.careLogs);
         setCareLogs(
-          (result.careLogs || []).sort(
-            (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-          )
+          normalizedLogs.sort((a, b) => {
+            const dateA = new Date(a.timestamp || 0);
+            const dateB = new Date(b.timestamp || 0);
+            return dateB - dateA;
+          })
         );
       }
     } catch (error) {
@@ -156,7 +115,7 @@ export default function App() {
 
   if (!isReady)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-sans">
         <Activity className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
         <p className="text-slate-500 font-bold animate-pulse uppercase text-[10px] tracking-widest">
           Sistem Sedang Memuat...
@@ -174,7 +133,7 @@ export default function App() {
             fetchData();
           }}
         >
-          <div className="p-2.5 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 group-active:scale-90 transition-transform">
+          <div className="p-2.5 bg-indigo-600 rounded-2xl shadow-lg group-active:scale-90 transition-transform">
             <HeartPulse className="w-5 h-5 text-white" />
           </div>
           <span className="font-black text-lg sm:text-xl uppercase tracking-tighter italic">
@@ -196,7 +155,7 @@ export default function App() {
               </div>
               <button
                 onClick={handleLogout}
-                className="p-3 bg-rose-50 text-rose-600 rounded-2xl active:scale-90 transition-all shadow-sm border border-rose-100"
+                className="p-3 bg-rose-50 text-rose-600 rounded-2xl active:scale-90 transition-all border border-rose-100"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -253,7 +212,6 @@ export default function App() {
   );
 }
 
-// --- SUB-KOMPONEN LOGIN ---
 function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
   const [loginStep, setLoginStep] = useState("role");
   const [tempCaregiver, setTempCaregiver] = useState(null);
@@ -276,7 +234,7 @@ function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-slate-100">
         <div className="flex justify-center mb-6">
-          <div className="p-5 bg-indigo-600 rounded-3xl shadow-lg shadow-indigo-200">
+          <div className="p-5 bg-indigo-600 rounded-3xl shadow-lg">
             <HeartPulse className="w-12 h-12 text-white" />
           </div>
         </div>
@@ -386,7 +344,6 @@ function LoginScreen({ caregivers, setCurrentUser, ADMIN_PASSWORD }) {
   );
 }
 
-// --- SUB-KOMPONEN ADMIN ---
 function AdminDashboard({
   patients,
   caregivers,
@@ -433,7 +390,6 @@ function AdminDashboard({
     }
   };
 
-  // List menu statistik untuk mapping klik
   const stats = [
     {
       label: "Pasien",
@@ -471,16 +427,15 @@ function AdminDashboard({
 
   return (
     <div className="space-y-6">
-      {/* Kartu Statistik yang Bisa Diklik */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s, i) => (
           <button
             key={i}
             onClick={() => setActiveAdminTab(s.tab)}
-            className={`bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center transition-all hover:shadow-md hover:border-indigo-100 hover:scale-105 active:scale-95 group`}
+            className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center transition-all hover:scale-105 active:scale-95 group"
           >
             <div
-              className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}
+              className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-2`}
             >
               <s.icon className={`w-5 h-5 ${s.color}`} />
             </div>
@@ -510,7 +465,7 @@ function AdminDashboard({
 
       <div className="bg-white p-6 rounded-[2rem] border shadow-sm">
         {activeAdminTab === "assignment" && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-6">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -521,9 +476,7 @@ function AdminDashboard({
               }}
               className="space-y-4 border-b pb-8"
             >
-              <h2 className="text-lg font-black uppercase">
-                Tugaskan Pramurukti Baru
-              </h2>
+              <h2 className="text-lg font-black uppercase">Penugasan Baru</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select
                   className="w-full p-4 bg-slate-50 border rounded-2xl outline-none font-bold"
@@ -566,55 +519,46 @@ function AdminDashboard({
                 disabled={isLoading}
                 className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
               >
-                {isLoading ? "Loading..." : "SIMPAN PENUGASAN"}
+                Simpan Penugasan
               </button>
             </form>
-            <h2 className="text-lg font-black uppercase">
-              Daftar Penugasan Aktif
-            </h2>
+            <h2 className="text-lg font-black uppercase">Daftar Aktif</h2>
             <div className="grid grid-cols-1 gap-3">
-              {assignments.filter((a) => a.status_penugasan === "Aktif")
-                .length === 0 ? (
-                <p className="text-center py-4 text-slate-400 font-bold uppercase text-[10px]">
-                  Belum ada penugasan
-                </p>
-              ) : (
-                assignments
-                  .filter((a) => a.status_penugasan === "Aktif")
-                  .map((a) => {
-                    const p = patients.find((x) => x.id == a.patientid);
-                    const c = caregivers.find((x) => x.id == a.caregiverid);
-                    return (
-                      <div
-                        key={a.id}
-                        className="p-4 bg-slate-50 rounded-2xl border flex flex-col md:flex-row justify-between items-center gap-2 hover:bg-white hover:border-indigo-100 transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-indigo-100 rounded-xl">
-                            <UserCircle className="text-indigo-600 w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="font-black text-xs uppercase leading-none mb-1">
-                              {p?.name || "Pasien Hilang"}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight italic">
-                              Dirawat Oleh: {c?.name || "Pramurukti Hilang"}
-                            </p>
-                          </div>
+              {assignments
+                .filter((a) => a.statuspenugasan === "Aktif")
+                .map((a) => {
+                  const p = patients.find((x) => x.id == a.patientid);
+                  const c = caregivers.find((x) => x.id == a.caregiverid);
+                  return (
+                    <div
+                      key={a.id}
+                      className="p-4 bg-slate-50 rounded-2xl border flex flex-col md:flex-row justify-between items-center gap-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 rounded-xl">
+                          <UserCircle className="text-indigo-600 w-5 h-5" />
                         </div>
-                        <span className="text-[9px] font-black bg-white px-3 py-1 rounded-full border border-slate-200 text-indigo-500 uppercase">
-                          Mulai: {a.startdate}
-                        </span>
+                        <div>
+                          <p className="font-black text-xs uppercase leading-none mb-1">
+                            {p?.name || "Pasien ?"}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight italic">
+                            Dirawat Oleh: {c?.name || "Caregiver ?"}
+                          </p>
+                        </div>
                       </div>
-                    );
-                  })
-              )}
+                      <span className="text-[9px] font-black bg-white px-3 py-1 rounded-full border border-slate-200 text-indigo-500 uppercase">
+                        Mulai: {a.startdate}
+                      </span>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
 
         {activeAdminTab === "patient" && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-6">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -622,9 +566,7 @@ function AdminDashboard({
               }}
               className="space-y-4 border-b pb-8"
             >
-              <h2 className="text-lg font-black uppercase">
-                Tambah Pasien Baru
-              </h2>
+              <h2 className="text-lg font-black uppercase">Tambah Pasien</h2>
               <input
                 type="text"
                 placeholder="Nama Pasien"
@@ -648,7 +590,7 @@ function AdminDashboard({
                 />
                 <input
                   type="text"
-                  placeholder="Alamat Singkat"
+                  placeholder="Alamat"
                   className="p-4 bg-slate-50 border rounded-2xl outline-none font-bold"
                   value={patientForm.address}
                   onChange={(e) =>
@@ -658,7 +600,7 @@ function AdminDashboard({
                 />
               </div>
               <textarea
-                placeholder="Diagnosa Utama"
+                placeholder="Diagnosa"
                 className="w-full p-4 bg-slate-50 border rounded-2xl h-24 outline-none font-medium"
                 value={patientForm.condition}
                 onChange={(e) =>
@@ -669,17 +611,16 @@ function AdminDashboard({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase shadow-lg active:scale-95 transition-all"
+                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase shadow-lg"
               >
-                {isLoading ? "..." : "DAFTARKAN PASIEN"}
+                Daftarkan Pasien
               </button>
             </form>
-            <h2 className="text-lg font-black uppercase">Daftar Pasien</h2>
             <div className="grid grid-cols-1 gap-2">
               {patients.map((p) => (
                 <div
                   key={p.id}
-                  className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center group hover:bg-white hover:border-indigo-100 transition-all"
+                  className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center group"
                 >
                   <div>
                     <p className="font-black text-xs uppercase mb-1">
@@ -698,7 +639,7 @@ function AdminDashboard({
                     </button>
                     <button
                       onClick={() => {
-                        if (window.confirm("Hapus pasien ini?"))
+                        if (window.confirm("Hapus?"))
                           handleAction("DELETE_PATIENT", { id: p.id });
                       }}
                       className="p-2 bg-white text-red-500 rounded-xl border border-red-100 hover:bg-red-500 hover:text-white transition-all shadow-sm"
@@ -713,7 +654,7 @@ function AdminDashboard({
         )}
 
         {activeAdminTab === "caregiver" && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-6">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -722,7 +663,7 @@ function AdminDashboard({
               className="space-y-4 border-b pb-8"
             >
               <h2 className="text-lg font-black uppercase">
-                Tambah Pramurukti Baru
+                Tambah Pramurukti
               </h2>
               <input
                 type="text"
@@ -765,19 +706,16 @@ function AdminDashboard({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase shadow-lg active:scale-95 transition-all"
+                className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase shadow-lg"
               >
-                {isLoading ? "..." : "DAFTARKAN PRAMURUKTI"}
+                Daftarkan Pramurukti
               </button>
             </form>
-            <h2 className="text-lg font-black uppercase">
-              Daftar Pramurukti Terdaftar
-            </h2>
             <div className="grid grid-cols-1 gap-2">
               {caregivers.map((c) => (
                 <div
                   key={c.id}
-                  className="p-4 bg-slate-50 rounded-2xl border flex justify-between items-center hover:bg-white hover:border-indigo-100 transition-all"
+                  className="p-4 bg-slate-50 rounded-2xl border flex justify-between items-center"
                 >
                   <div className="flex items-center gap-3">
                     <UserCircle className="text-slate-400 w-5 h-5" />
@@ -785,17 +723,15 @@ function AdminDashboard({
                       {c.name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        c.status === "Aktif"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
-                      }`}
-                    >
-                      {c.status}
-                    </span>
-                  </div>
+                  <span
+                    className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                      c.status === "Aktif"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {c.status}
+                  </span>
                 </div>
               ))}
             </div>
@@ -803,15 +739,14 @@ function AdminDashboard({
         )}
 
         {activeAdminTab === "logs" && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-6">
             <h2 className="text-lg font-black uppercase flex items-center gap-2">
-              <History className="w-5 h-5 text-indigo-600" /> Rekap Seluruh
-              Aktivitas
+              <History className="w-5 h-5 text-indigo-600" /> Seluruh Aktivitas
             </h2>
             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
               {careLogs.length === 0 ? (
                 <p className="text-center text-slate-400 font-bold py-10">
-                  Belum ada aktivitas terekam.
+                  Belum ada aktivitas.
                 </p>
               ) : (
                 careLogs.map((log, i) => {
@@ -827,12 +762,16 @@ function AdminDashboard({
                           <p className="font-black text-xs uppercase text-indigo-900">
                             {p?.name || "Pasien ?"}
                           </p>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">
                             Pramurukti: {c?.name || "Caregiver ?"}
                           </p>
                         </div>
                         <span className="text-[9px] font-black text-slate-300 uppercase italic">
-                          {new Date(log.timestamp).toLocaleTimeString("id-ID")}
+                          {log.timestamp
+                            ? new Date(log.timestamp).toLocaleTimeString(
+                                "id-ID"
+                              )
+                            : "-"}
                         </span>
                       </div>
                       <div className="bg-white p-3 rounded-xl border border-slate-100 mt-2">
@@ -860,7 +799,6 @@ function AdminDashboard({
   );
 }
 
-// --- SUB-KOMPONEN CAREGIVER ---
 function CaregiverDashboard({
   currentUser,
   patients,
@@ -871,8 +809,7 @@ function CaregiverDashboard({
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const myAssignments = assignments.filter(
-    (a) =>
-      a.caregiverid == currentUser.data.id && a.status_penugasan === "Aktif"
+    (a) => a.caregiverid == currentUser.data.id && a.statuspenugasan === "Aktif"
   );
   const myPatients = patients.filter((p) =>
     myAssignments.some((a) => a.patientid == p.id)
@@ -933,13 +870,13 @@ function CaregiverDashboard({
       <div className="grid grid-cols-1 gap-4">
         {myPatients.length === 0 ? (
           <div className="bg-white p-12 rounded-[2rem] border-2 border-dashed text-center text-slate-400 uppercase font-black text-xs">
-            Belum ada penugasan aktif untuk Anda
+            Belum ada penugasan aktif
           </div>
         ) : (
           myPatients.map((p) => (
             <div
               key={p.id}
-              className="bg-white rounded-[2rem] border shadow-sm p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-[2rem] border shadow-sm p-6"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -952,7 +889,7 @@ function CaregiverDashboard({
                 </div>
                 <button
                   onClick={() => setSelectedPatient(p)}
-                  className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl active:scale-90 shadow-sm border border-indigo-100 transition-all hover:bg-indigo-600 hover:text-white"
+                  className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl active:scale-90 transition-all shadow-sm border border-indigo-100 hover:bg-indigo-600 hover:text-white"
                 >
                   <FileText className="w-5 h-5" />
                 </button>
@@ -977,7 +914,7 @@ function CaregiverDashboard({
                   />
                   <input
                     type="text"
-                    placeholder="Vital (Tensi/Suhu)"
+                    placeholder="Vital"
                     className="w-full p-4 rounded-xl border font-bold text-sm outline-none"
                     value={logForm.vitals}
                     onChange={(e) =>
@@ -1006,9 +943,9 @@ function CaregiverDashboard({
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 py-4 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase shadow-lg active:scale-95 transition-all"
+                      className="flex-1 py-4 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase shadow-lg active:scale-95"
                     >
-                      {isLoading ? "..." : "SIMPAN"}
+                      SIMPAN
                     </button>
                   </div>
                 </form>
@@ -1036,7 +973,6 @@ function CaregiverDashboard({
   );
 }
 
-// --- SUB-KOMPONEN DETAIL PASIEN ---
 function PatientDetail({
   selectedPatient,
   setSelectedPatient,
@@ -1065,28 +1001,27 @@ function PatientDetail({
           </span>
         </div>
         <h3 className="text-lg font-black uppercase mb-8 flex items-center gap-3">
-          <FileText className="w-5 h-5 text-indigo-500" /> Histori Rekam Medis
+          <FileText className="w-5 h-5 text-indigo-500" /> Histori Perawatan
         </h3>
         <div className="relative border-l-2 border-slate-100 ml-3 space-y-10 pb-4">
           {history.length === 0 ? (
             <p className="text-slate-400 font-bold ml-6 italic text-sm">
-              Belum ada catatan untuk pasien ini.
+              Belum ada catatan.
             </p>
           ) : (
             history.map((log, i) => {
               const cg = caregivers.find((x) => x.id == log.caregiverid);
               return (
-                <div
-                  key={i}
-                  className="relative pl-8 animate-in slide-in-from-left-2 duration-300"
-                >
+                <div key={i} className="relative pl-8">
                   <div className="absolute w-4 h-4 bg-white border-4 border-indigo-500 rounded-full -left-[9px] top-1 shadow-md"></div>
                   <div className="mb-2 text-xs font-black text-slate-400 uppercase flex items-center gap-2">
-                    {new Date(log.timestamp).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {log.timestamp
+                      ? new Date(log.timestamp).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "-"}
                     <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-100 text-[8px] font-black">
                       OLEH: {cg?.name || "Pramurukti"}
                     </span>
