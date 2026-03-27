@@ -29,7 +29,7 @@ import {
 // --- KONFIGURASI ---
 // GANTI URL DI BAWAH INI DENGAN WEB APP URL LENGKAP ANDA
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbw6H3YI1LwA7K_y8vY0L9o1S_vPq7n4T9r5e6.../exec";
+  "https://script.google.com/macros/s/AKfycbxCXdd6UNRvG3uWz_exZ04RArBCxjf0BlKe7xr85ZaZxKX7vh5ndaI3tyjs9cALqQzzJQ/exec";
 const ADMIN_PASSWORD_REQUIRED = "admin123";
 
 export default function App() {
