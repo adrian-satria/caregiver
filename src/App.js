@@ -9,7 +9,7 @@ import {
 
 // --- KONFIGURASI ---
 // URL hasil Deploy Apps Script Anda
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbz8X4IaDorH-PiBhDAYr4qVU_cYD-xl2sX5n8G0RneG4R2yzlj6N7QR5l7HiQfUYfvLRQ/exec'; 
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxW5f-cfy3x9bv0brLqKVblCiM9UMx5wSA0UuX_4JPULbqNZb_04upwPdp7EuzoctmrwA/exec'; 
 const ADMIN_PASSWORD_REQUIRED = 'admin123';
 
 export default function App() {
